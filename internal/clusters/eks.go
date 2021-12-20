@@ -173,7 +173,7 @@ func getClusters(client *eks.Client, clusterNames []string, region string) ([]*E
 
 func describeCluster(client *eks.Client, clusterName, region string) (*eks.DescribeClusterOutput, error) {
 	params := &eks.DescribeClusterInput{Name: &clusterName}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
 	output, err := client.DescribeCluster(ctx, params, func(o *eks.Options) {
@@ -188,7 +188,7 @@ func describeCluster(client *eks.Client, clusterName, region string) (*eks.Descr
 
 func listClusters(client *eks.Client, region string) ([]string, error) {
 	params := &eks.ListClustersInput{}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	output, err := client.ListClusters(ctx, params, func(o *eks.Options) {
 		o.Region = region
