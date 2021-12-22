@@ -2,9 +2,10 @@ package kubecfg
 
 import (
 	"bytes"
-	"gogok8s/internal/terminal"
 	"os"
 	"path"
+
+	"github.com/BigPapaChas/gogok8s/internal/terminal"
 
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"

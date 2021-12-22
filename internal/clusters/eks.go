@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"gogok8s/internal/kubecfg"
 	"strings"
 	"time"
+
+	"github.com/BigPapaChas/gogok8s/internal/kubecfg"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/eks"

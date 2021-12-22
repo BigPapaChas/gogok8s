@@ -2,9 +2,10 @@ package commands
 
 import (
 	"fmt"
-	"gogok8s/internal/clusters"
-	"gogok8s/internal/kubecfg"
-	"gogok8s/internal/terminal"
+
+	"github.com/BigPapaChas/gogok8s/internal/clusters"
+	"github.com/BigPapaChas/gogok8s/internal/kubecfg"
+	"github.com/BigPapaChas/gogok8s/internal/terminal"
 
 	"github.com/spf13/cobra"
 )

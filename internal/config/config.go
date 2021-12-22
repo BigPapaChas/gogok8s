@@ -2,7 +2,8 @@ package config
 
 import (
 	"fmt"
-	"gogok8s/internal/clusters"
+
+	"github.com/BigPapaChas/gogok8s/internal/clusters"
 )
 
 type Config struct {

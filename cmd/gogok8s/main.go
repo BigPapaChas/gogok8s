@@ -1,9 +1,10 @@
 package main
 
 import (
-	"gogok8s/internal/commands"
-	"gogok8s/internal/terminal"
 	"os"
+
+	"github.com/BigPapaChas/gogok8s/internal/commands"
+	"github.com/BigPapaChas/gogok8s/internal/terminal"
 )
 
 func main() {

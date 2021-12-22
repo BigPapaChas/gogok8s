@@ -1,4 +1,4 @@
-module gogok8s
+module github.com/BigPapaChas/gogok8s
 
 go 1.17
 

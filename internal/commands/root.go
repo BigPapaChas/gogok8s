@@ -1,8 +1,9 @@
 package commands
 
 import (
-	"gogok8s/internal/config"
 	"os"
+
+	"github.com/BigPapaChas/gogok8s/internal/config"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

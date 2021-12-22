@@ -1,8 +1,8 @@
 package clusters
 
 import (
-	"gogok8s/internal/kubecfg"
-	"gogok8s/internal/terminal"
+	"github.com/BigPapaChas/gogok8s/internal/kubecfg"
+	"github.com/BigPapaChas/gogok8s/internal/terminal"
 )
 
 type PatchResult struct {
