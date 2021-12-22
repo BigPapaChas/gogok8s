@@ -107,73 +107,19 @@ func compareClusterChanges(config *api.Config, cluster *v1.NamedCluster) bool {
 		terminal.DiffAdd(cluster.Name)
 		return true
 	} else if currentConfig.Server != cluster.Cluster.Server ||
-		bytes.Compare(currentConfig.CertificateAuthorityData, cluster.Cluster.CertificateAuthorityData) != 0 {
+		!bytes.Equal(currentConfig.CertificateAuthorityData, cluster.Cluster.CertificateAuthorityData) {
 		terminal.DiffModify(cluster.Name)
 		if currentConfig.Server != cluster.Cluster.Server {
 			terminal.DiffMinus(currentConfig.Server)
 			terminal.DiffAdd(cluster.Cluster.Server)
 		}
-		if bytes.Compare(currentConfig.CertificateAuthorityData, cluster.Cluster.CertificateAuthorityData) != 0 {
+		if !bytes.Equal(currentConfig.CertificateAuthorityData, cluster.Cluster.CertificateAuthorityData) {
 			terminal.DiffMinus("certificate-authority-data: <OMITTED>")
 			terminal.DiffAdd("certificate-authority-data: <OMITTED>")
 		}
 		return true
 	}
 	return false
-}
-
-func compareUserChanges(config *api.Config, user *v1.NamedAuthInfo) bool {
-	if currentConfig, ok := config.AuthInfos[user.Name]; !ok {
-		return true
-	} else if currentConfig.Exec.APIVersion != user.AuthInfo.Exec.APIVersion ||
-		currentConfig.Exec.Command != user.AuthInfo.Exec.Command ||
-		!execArgsEqual(currentConfig.Exec.Args, user.AuthInfo.Exec.Args) ||
-		!execEnvEqual(currentConfig.Exec.Env, user.AuthInfo.Exec.Env) {
-		return true
-	}
-	return false
-}
-
-func compareContextChanges(config *api.Config, context *v1.NamedContext) bool {
-	if currentConfig, ok := config.Contexts[context.Name]; !ok {
-		return true
-	} else if currentConfig.AuthInfo != context.Context.AuthInfo ||
-		currentConfig.Cluster != context.Context.Cluster {
-		return true
-	}
-	return false
-}
-
-func execArgsEqual(args1, args2 []string) bool {
-	if len(args1) != len(args2) {
-		return false
-	}
-	for i, v := range args1 {
-		if v != args2[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func execEnvEqual(env1 []api.ExecEnvVar, env2 []v1.ExecEnvVar) bool {
-	if len(env1) != len(env2) {
-		return false
-	}
-
-	envMap := make(map[string]string)
-	for _, env := range env1 {
-		envMap[env.Name] = env.Value
-	}
-
-	for _, env := range env2 {
-		if v, ok := envMap[env.Name]; !ok {
-			return false
-		} else if v != env.Value {
-			return false
-		}
-	}
-	return true
 }
 
 func convertExecEnvVar(envVars []v1.ExecEnvVar) []api.ExecEnvVar {
