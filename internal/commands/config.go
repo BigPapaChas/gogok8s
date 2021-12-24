@@ -65,16 +65,10 @@ var configCmd = &cobra.Command{
 			return err
 		}
 
-		format, err := terminal.Prompt("Format", "")
-		if err != nil {
-			return err
-		}
-
 		account := clusters.EKSAccount{
 			Profile: profile,
 			Regions: regions,
 			Name:    accountName,
-			Format:  format,
 		}
 		cfg.AddAccount(account)
 
