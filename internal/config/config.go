@@ -2,6 +2,11 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 
 	"github.com/BigPapaChas/gogok8s/internal/clusters"
 )
@@ -11,7 +16,7 @@ type Config struct {
 }
 
 var (
-	validRegions = []string{
+	ValidRegions = []string{
 		"us-east-1",
 		"us-east-2",
 		"us-west-1",
@@ -33,6 +38,10 @@ var (
 	validRegionsMap = getValidRegions()
 )
 
+func NewConfig() *Config {
+	return &Config{}
+}
+
 func (c *Config) Validate() error {
 	// TODO: Add more validation
 
@@ -47,6 +56,23 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+func (c *Config) Write() error {
+	return c.WriteToFile(viper.ConfigFileUsed())
+}
+
+func (c *Config) WriteToFile(filename string) error {
+	data, err := yaml.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(filename, data, os.FileMode(0o644))
+}
+
+func (c *Config) AddAccount(account clusters.EKSAccount) {
+	c.Accounts = append(c.Accounts, account)
+}
+
 func isValidRegion(region string) bool {
 	_, ok := validRegionsMap[region]
 	return ok
@@ -54,7 +80,7 @@ func isValidRegion(region string) bool {
 
 func getValidRegions() map[string]struct{} {
 	regions := make(map[string]struct{})
-	for _, region := range validRegions {
+	for _, region := range ValidRegions {
 		regions[region] = struct{}{}
 	}
 	return regions

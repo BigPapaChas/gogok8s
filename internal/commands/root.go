@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/BigPapaChas/gogok8s/internal/config"
+	"github.com/BigPapaChas/gogok8s/internal/terminal"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,7 +19,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:     "gogok8s",
 	Short:   "gogok8s helps manage your k8s cluster kubeconfig(s)",
-	Version: "v0.0.1",
+	Version: "v0.0.2",
 }
 
 func init() {
@@ -26,8 +27,11 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.gogok8s.yaml)")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug messages")
+
 	syncCommand.Flags().Bool("dry-run", false, "performs a dryrun, showing a diff of the changes")
 	rootCmd.AddCommand(syncCommand)
+
+	rootCmd.AddCommand(configCmd)
 }
 
 func initConfig() {
@@ -45,9 +49,13 @@ func initConfig() {
 		viper.SetConfigName(".gogok8s")
 	}
 
-	cobra.CheckErr(viper.ReadInConfig())
-	cfg = &config.Config{}
-	cobra.CheckErr(viper.Unmarshal(cfg))
+	err := viper.ReadInConfig()
+	if err != nil {
+		terminal.PrintWarning(err.Error())
+	} else {
+		cfg = config.NewConfig()
+		cobra.CheckErr(viper.Unmarshal(cfg))
+	}
 }
 
 func Execute() error {
