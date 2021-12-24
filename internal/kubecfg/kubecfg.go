@@ -2,6 +2,7 @@ package kubecfg
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path"
 
@@ -28,7 +29,11 @@ func LoadDefault() (*api.Config, error) {
 }
 
 func LoadFromFile(filename string) (*api.Config, error) {
-	return clientcmd.LoadFromFile(filename)
+	cfg, err := clientcmd.LoadFromFile(filename)
+	if err != nil && errors.Is(err, os.ErrNotExist) {
+		return api.NewConfig(), nil
+	}
+	return cfg, err
 }
 
 func Write(config *api.Config) error {

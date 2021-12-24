@@ -37,6 +37,10 @@ func PrintSuccess(message string) {
 	pterm.Success.Printfln(message)
 }
 
+func PrintWarning(message string) {
+	pterm.Warning.Printfln(message)
+}
+
 func PrintError(message string) {
 	pterm.Error.Printfln(message)
 }

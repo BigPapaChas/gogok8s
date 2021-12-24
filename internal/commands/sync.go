@@ -17,6 +17,9 @@ var syncCommand = &cobra.Command{
 		if debug {
 			terminal.EnableDebug()
 		}
+		if cfg == nil {
+			return fmt.Errorf("couldn't find .gogok8s.yaml in home directory, try running `gogok8s configure`")
+		}
 		return cfg.Validate()
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
