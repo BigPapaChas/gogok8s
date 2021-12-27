@@ -60,6 +60,13 @@ Each entry in `accounts` has the following fields:
 named `${name}.${region}.${clusterName}`. For example, if the `Dev` account within the config file above had a cluster
 within the `us-east-1` region named `test-v1.20`, the kubeconfig context would be named `Dev.us-east-1.test-v1.20`.
 
+# Syncing Clusters
+
+Running `gogok8s sync` will look for EKS clusters in each account (and region) and fetch the necessary details to craft 
+a kubeconfig cluster/user/context for connecting to the cluster. This command offers the following flags:
+- `--dry-run` - Performs a dryrun, only showing the kubeconfig diffs.
+- `--purge` - Purges the kubeconfig of EKS clusters that were not found. This is off by default.
+
 # Editing the Format
 
 The `format` field supports some customization as to how the kubeconfig clusters, users, and contexts are named. The
