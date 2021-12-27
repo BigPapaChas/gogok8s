@@ -5,9 +5,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/BigPapaChas/gogok8s/internal/clusters"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
+
+	"github.com/BigPapaChas/gogok8s/internal/clusters"
 )
 
 type Config struct {

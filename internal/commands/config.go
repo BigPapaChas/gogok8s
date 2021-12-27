@@ -5,10 +5,11 @@ import (
 	"os"
 	"path"
 
+	"github.com/spf13/cobra"
+
 	"github.com/BigPapaChas/gogok8s/internal/clusters"
 	"github.com/BigPapaChas/gogok8s/internal/config"
 	"github.com/BigPapaChas/gogok8s/internal/terminal"
-	"github.com/spf13/cobra"
 )
 
 var configCmd = &cobra.Command{

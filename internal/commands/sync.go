@@ -4,10 +4,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/BigPapaChas/gogok8s/internal/clusters"
 	"github.com/BigPapaChas/gogok8s/internal/kubecfg"
 	"github.com/BigPapaChas/gogok8s/internal/terminal"
-	"github.com/spf13/cobra"
 )
 
 var errConfigNotExist = errors.New("couldn't find .gogok8s.yaml in home directory, try running `gogok8s configure`")

@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BigPapaChas/gogok8s/internal/kubecfg"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	v1 "k8s.io/client-go/tools/clientcmd/api/v1"
+
+	"github.com/BigPapaChas/gogok8s/internal/kubecfg"
 )
 
 type EKSAccount struct {
