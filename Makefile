@@ -1,3 +1,4 @@
 lint:
 	gofumpt -l -w .
-	golangci-lint run --enable-all --disable wrapcheck,goerr113,gochecknoglobals,exhaustivestruct,gochecknoinits,interfacer,prealloc --fix
+	goimports -w -local github.com/BigPapaChas/gogok8s .
+	golangci-lint run --enable-all --disable wrapcheck,goerr113,gochecknoglobals,exhaustivestruct,gochecknoinits,interfacer,prealloc,gci

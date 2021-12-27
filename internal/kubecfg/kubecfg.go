@@ -6,10 +6,11 @@ import (
 	"os"
 	"path"
 
-	"github.com/BigPapaChas/gogok8s/internal/terminal"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	v1 "k8s.io/client-go/tools/clientcmd/api/v1"
+
+	"github.com/BigPapaChas/gogok8s/internal/terminal"
 )
 
 type KubeConfigPatch struct {
