@@ -38,7 +38,10 @@ type DescribeClusterResult struct {
 	Error   error
 }
 
-const defaultTimeout = time.Millisecond * 30000
+const (
+	defaultTimeout = time.Millisecond * 30000
+	defaultFormat  = "${name}.${region}.${clusterName}"
+)
 
 func (a *EKSAccount) GenerateKubeConfigPatch() (*kubecfg.KubeConfigPatch, []error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithSharedConfigProfile(a.Profile))
@@ -86,15 +89,18 @@ func (a *EKSAccount) generateKubeConfigPatch(clusters []*EKSCluster) *kubecfg.Ku
 
 	for _, cluster := range clusters {
 		var clusterName, userName, contextName string
-		if a.Format != "" {
-			clusterName = strings.Replace(a.Format, "${cluster}", cluster.Name, 1)
-			userName = strings.Replace(a.Format, "${cluster}", cluster.Name, 1)
-			contextName = strings.Replace(a.Format, "${cluster}", cluster.Name, 1)
-		} else {
-			clusterName = fmt.Sprintf("%s.%s.%s", a.Name, cluster.Region, cluster.Name)
-			userName = fmt.Sprintf("%s.%s.%s", a.Name, cluster.Region, cluster.Name)
-			contextName = fmt.Sprintf("%s.%s.%s", a.Name, cluster.Region, cluster.Name)
+
+		replacements := map[string]string{
+			"${name}":        a.Name,
+			"${region}":      cluster.Region,
+			"${clusterName}": cluster.Name,
+			"${clusterArn}":  cluster.Arn,
 		}
+
+		formattedName := formatName(a.Format, replacements)
+		clusterName = formattedName
+		userName = formattedName
+		contextName = formattedName
 
 		patch.Clusters = append(patch.Clusters, &v1.NamedCluster{
 			Name: clusterName,
@@ -213,4 +219,17 @@ func listClusters(client *eks.Client, region string) ([]string, error) {
 	}
 
 	return output.Clusters, nil
+}
+
+func formatName(format string, replacements map[string]string) string {
+	// Use default format if an empty format was passed
+	if format == "" {
+		format = defaultFormat
+	}
+
+	for old, replacement := range replacements {
+		format = strings.ReplaceAll(format, old, replacement)
+	}
+
+	return format
 }
