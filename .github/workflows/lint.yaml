@@ -11,4 +11,4 @@ jobs:
         with:
           golangci_lint_flags: '--enable-all --disable wrapcheck,goerr113,gochecknoglobals,exhaustivestruct,gochecknoinits,interfacer,prealloc'
           fail_on_error: true
-          go_version: 1.16
+          go_version: 1.17
