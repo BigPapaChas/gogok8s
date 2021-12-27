@@ -13,6 +13,7 @@ func main() {
 		if errors.Is(err, terminal.ErrUserQuit) {
 			os.Exit(130)
 		}
+
 		terminal.PrintError(err.Error())
 		os.Exit(1)
 	}

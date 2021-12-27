@@ -20,6 +20,7 @@ func Prompt(label, defaultValue string) (string, error) {
 			if len(s) == 0 {
 				return fmt.Errorf("%s must contain at least one character", label)
 			}
+
 			return nil
 		},
 	}
@@ -28,6 +29,7 @@ func Prompt(label, defaultValue string) (string, error) {
 	if err != nil && errors.Is(err, promptui.ErrInterrupt) {
 		return "", ErrUserQuit
 	}
+
 	return result, err
 }
 
@@ -39,9 +41,11 @@ func MultiSelect(name string, choices []string) ([]string, error) {
 		userQuit: make(map[int]struct{}),
 	}
 	p := tea.NewProgram(model)
+
 	if err := p.Start(); err != nil {
 		return nil, err
 	}
+
 	if len(model.userQuit) > 0 {
 		return nil, ErrUserQuit
 	}
@@ -50,6 +54,7 @@ func MultiSelect(name string, choices []string) ([]string, error) {
 	for i := range model.selected {
 		chosenOptions = append(chosenOptions, choices[i])
 	}
+
 	return chosenOptions, nil
 }
 
@@ -67,7 +72,6 @@ func (m selectModel) View() string {
 
 	// Iterate over our choices
 	for i, choice := range m.choices {
-
 		// Is the cursor pointing at this choice?
 		cursor := " " // no cursor
 		if m.cursor == i {
@@ -86,7 +90,6 @@ func (m selectModel) View() string {
 		} else {
 			s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
 		}
-
 	}
 
 	// The footer
@@ -102,17 +105,13 @@ func (m selectModel) Init() tea.Cmd {
 }
 
 func (m selectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-
-	// Is it a key press?
-	case tea.KeyMsg:
-
+	if msg, ok := msg.(tea.KeyMsg); ok {
 		// Cool, what was the actual key pressed?
 		switch msg.String() {
-
 		// These keys should exit the program.
 		case "ctrl+c", "q":
 			m.userQuit[0] = struct{}{}
+
 			return m, tea.Quit
 
 		case "c":

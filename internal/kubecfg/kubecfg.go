@@ -7,7 +7,6 @@ import (
 	"path"
 
 	"github.com/BigPapaChas/gogok8s/internal/terminal"
-
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	v1 "k8s.io/client-go/tools/clientcmd/api/v1"
@@ -33,6 +32,7 @@ func LoadFromFile(filename string) (*api.Config, error) {
 	if err != nil && errors.Is(err, os.ErrNotExist) {
 		return api.NewConfig(), nil
 	}
+
 	return cfg, err
 }
 
@@ -51,6 +51,7 @@ func ApplyPatch(patch *KubeConfigPatch, config *api.Config) {
 	}
 
 	terminal.TextYellow("\nApplying changes to kubeconfig")
+
 	for _, cluster := range patch.Clusters {
 		applyClusterChanges(config, cluster)
 	}
@@ -66,6 +67,7 @@ func ApplyPatch(patch *KubeConfigPatch, config *api.Config) {
 
 func applyClusterChanges(config *api.Config, cluster *v1.NamedCluster) {
 	compareClusterChanges(config, cluster)
+
 	if _, ok := config.Clusters[cluster.Name]; !ok {
 		config.Clusters[cluster.Name] = &api.Cluster{
 			Server:                   cluster.Cluster.Server,
@@ -110,6 +112,7 @@ func applyContextChanges(config *api.Config, context *v1.NamedContext) {
 func compareClusterChanges(config *api.Config, cluster *v1.NamedCluster) bool {
 	if currentConfig, ok := config.Clusters[cluster.Name]; !ok {
 		terminal.DiffAdd(cluster.Name)
+
 		return true
 	} else if currentConfig.Server != cluster.Cluster.Server ||
 		!bytes.Equal(currentConfig.CertificateAuthorityData, cluster.Cluster.CertificateAuthorityData) {
@@ -122,8 +125,10 @@ func compareClusterChanges(config *api.Config, cluster *v1.NamedCluster) bool {
 			terminal.DiffMinus("certificate-authority-data: <OMITTED>")
 			terminal.DiffAdd("certificate-authority-data: <OMITTED>")
 		}
+
 		return true
 	}
+
 	return false
 }
 
@@ -135,6 +140,7 @@ func convertExecEnvVar(envVars []v1.ExecEnvVar) []api.ExecEnvVar {
 			Value: envVar.Value,
 		})
 	}
+
 	return convertedExecEnvVars
 }
 
@@ -143,14 +149,15 @@ func writeKubeConfigToFile(config *api.Config, filename string) error {
 }
 
 func getKubeConfigFilePath() (string, error) {
-	var filename string
 	filename, ok := os.LookupEnv("KUBECONFIG")
 	if !ok {
 		homedir, err := os.UserHomeDir()
 		if err != nil {
 			return "", err
 		}
+
 		filename = path.Join(homedir, ".kube", "config")
 	}
+
 	return filename, nil
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/BigPapaChas/gogok8s/internal/config"
 	"github.com/BigPapaChas/gogok8s/internal/terminal"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,8 +48,7 @@ func initConfig() {
 		viper.SetConfigName(".gogok8s")
 	}
 
-	err := viper.ReadInConfig()
-	if err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		terminal.PrintWarning(err.Error())
 	} else {
 		cfg = config.NewConfig()
