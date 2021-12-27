@@ -16,6 +16,12 @@ func Prompt(label, defaultValue string) (string, error) {
 		Label:     label,
 		Default:   defaultValue,
 		AllowEdit: true,
+		Validate: func(s string) error {
+			if len(s) == 0 {
+				return fmt.Errorf("%s must contain at least one character", label)
+			}
+			return nil
+		},
 	}
 
 	result, err := prompt.Run()
@@ -25,7 +31,7 @@ func Prompt(label, defaultValue string) (string, error) {
 	return result, err
 }
 
-func Select(name string, choices []string) ([]string, error) {
+func MultiSelect(name string, choices []string) ([]string, error) {
 	model := selectModel{
 		title:    name,
 		choices:  choices,

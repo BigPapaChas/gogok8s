@@ -60,7 +60,7 @@ var configCmd = &cobra.Command{
 			return err
 		}
 
-		regions, err := terminal.Select("AWS regions", config.ValidRegions)
+		regions, err := terminal.MultiSelect("AWS regions", config.ValidRegions)
 		if err != nil {
 			return err
 		}
