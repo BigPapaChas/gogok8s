@@ -3,10 +3,11 @@ package commands
 import (
 	"os"
 
-	"github.com/BigPapaChas/gogok8s/internal/config"
-	"github.com/BigPapaChas/gogok8s/internal/terminal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/BigPapaChas/gogok8s/internal/config"
+	"github.com/BigPapaChas/gogok8s/internal/terminal"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:     "gogok8s",
 	Short:   "gogok8s helps manage your k8s cluster kubeconfig(s)",
-	Version: "v0.0.2",
+	Version: "v0.0.3",
 }
 
 func init() {
