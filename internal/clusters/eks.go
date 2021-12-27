@@ -88,9 +88,9 @@ func (a *EKSAccount) generateKubeConfigPatch(clusters []*EKSCluster) *kubecfg.Ku
 			userName = strings.Replace(a.Format, "${cluster}", cluster.Name, 1)
 			contextName = strings.Replace(a.Format, "${cluster}", cluster.Name, 1)
 		} else {
-			clusterName = cluster.Arn
-			userName = cluster.Arn
-			contextName = cluster.Arn
+			clusterName = fmt.Sprintf("%s.%s.%s", a.Name, cluster.Region, cluster.Name)
+			userName = fmt.Sprintf("%s.%s.%s", a.Name, cluster.Region, cluster.Name)
+			contextName = fmt.Sprintf("%s.%s.%s", a.Name, cluster.Region, cluster.Name)
 		}
 
 		patch.Clusters = append(patch.Clusters, &v1.NamedCluster{
