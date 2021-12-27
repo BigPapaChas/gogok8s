@@ -19,7 +19,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:     "gogok8s",
 	Short:   "gogok8s helps manage your k8s cluster kubeconfig(s)",
-	Version: "v0.0.4",
+	Version: "v0.0.5",
 }
 
 func init() {
