@@ -29,6 +29,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug messages")
 
 	syncCommand.Flags().Bool("dry-run", false, "performs a dryrun, showing a diff of the changes")
+	syncCommand.Flags().Bool("purge", false, "purges the kubeconfig of clusters not found")
 	rootCmd.AddCommand(syncCommand)
 
 	rootCmd.AddCommand(configCmd)
