@@ -43,13 +43,24 @@ func NewConfig() *Config {
 }
 
 func (c *Config) Validate() error {
-	// TODO: Add more validation
+	accountNames := make(map[string]struct{})
+	for idx, account := range c.Accounts {
+		// validate that there are no duplicate account names
+		if _, ok := accountNames[account.Name]; !ok {
+			accountNames[account.Name] = struct{}{}
+		} else {
+			return fmt.Errorf("error validating config: duplicate account `%s` at accounts[%d]", account.Name, idx)
+		}
 
-	// Validate accounts
-	for _, account := range c.Accounts {
+		// validate that each account has at least one valid region
+		if len(account.Regions) == 0 {
+			return fmt.Errorf("error validating config: account `%s` must contain at least one valid region", account.Name)
+		}
+
+		// validate each region is a valid AWS region
 		for _, region := range account.Regions {
 			if !isValidRegion(region) {
-				return fmt.Errorf("invalid region %s in account %s", region, account.Name)
+				return fmt.Errorf("error validating config: invalid region `%s` in account `%s`", region, account.Name)
 			}
 		}
 	}
