@@ -3,11 +3,10 @@ package commands
 import (
 	"os"
 
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
 	"github.com/BigPapaChas/gogok8s/internal/config"
 	"github.com/BigPapaChas/gogok8s/internal/terminal"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
