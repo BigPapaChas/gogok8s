@@ -46,7 +46,7 @@ func Write(config *api.Config) error {
 	return writeKubeConfigToFile(config, filename)
 }
 
-func ApplyPatch(patch *KubeConfigPatch, config *api.Config) {
+func ApplyPatch(patch *KubeConfigPatch, config *api.Config, purge bool) {
 	if patch == nil {
 		return
 	}
@@ -63,6 +63,77 @@ func ApplyPatch(patch *KubeConfigPatch, config *api.Config) {
 
 	for _, context := range patch.Contexts {
 		applyContextChanges(config, context)
+	}
+
+	if purge {
+		purgeKubeConfig(patch, config)
+	}
+}
+
+func purgeKubeConfig(patch *KubeConfigPatch, config *api.Config) {
+	// purge clusters
+	purgeClusters(patch, config)
+	// purge users
+	purgeUsers(patch, config)
+	// purge contexts
+	purgeContexts(patch, config)
+}
+
+func purgeContexts(patch *KubeConfigPatch, config *api.Config) {
+	existingContexts := make(map[string]struct{})
+	for _, context := range patch.Contexts {
+		existingContexts[context.Name] = struct{}{}
+	}
+
+	var contextsToDelete []string
+
+	for name := range config.Contexts {
+		if _, ok := existingContexts[name]; !ok {
+			contextsToDelete = append(contextsToDelete, name)
+		}
+	}
+
+	for _, context := range contextsToDelete {
+		delete(config.Contexts, context)
+	}
+}
+
+func purgeUsers(patch *KubeConfigPatch, config *api.Config) {
+	existingUsers := make(map[string]struct{})
+	for _, user := range patch.Users {
+		existingUsers[user.Name] = struct{}{}
+	}
+
+	var usersToDelete []string
+
+	for name := range config.AuthInfos {
+		if _, ok := existingUsers[name]; !ok {
+			usersToDelete = append(usersToDelete, name)
+		}
+	}
+
+	for _, user := range usersToDelete {
+		delete(config.AuthInfos, user)
+	}
+}
+
+func purgeClusters(patch *KubeConfigPatch, config *api.Config) {
+	existingClusters := make(map[string]struct{})
+	for _, cluster := range patch.Clusters {
+		existingClusters[cluster.Name] = struct{}{}
+	}
+
+	var clustersToDelete []string
+
+	for name := range config.Clusters {
+		if _, ok := existingClusters[name]; !ok {
+			terminal.DiffMinus(name)
+			clustersToDelete = append(clustersToDelete, name)
+		}
+	}
+
+	for _, cluster := range clustersToDelete {
+		delete(config.Clusters, cluster)
 	}
 }
 

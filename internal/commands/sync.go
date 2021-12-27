@@ -28,14 +28,15 @@ var syncCommand = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		purge, _ := cmd.Flags().GetBool("purge")
 
-		return syncKubernetesClusters(dryRun)
+		return syncKubernetesClusters(dryRun, purge)
 	},
 	SilenceErrors: true,
 	SilenceUsage:  true,
 }
 
-func syncKubernetesClusters(dryRun bool) error {
+func syncKubernetesClusters(dryRun, purge bool) error {
 	kubeconfig, err := kubecfg.LoadDefault()
 	if err != nil {
 		return fmt.Errorf("error reading from kubeconfig: %w", err)
@@ -43,7 +44,7 @@ func syncKubernetesClusters(dryRun bool) error {
 
 	patch := clusters.GetPatchFromAccounts(cfg.Accounts)
 
-	kubecfg.ApplyPatch(patch.Patch, kubeconfig)
+	kubecfg.ApplyPatch(patch.Patch, kubeconfig, purge)
 
 	if dryRun {
 		terminal.TextSuccess("Dryrun complete")
