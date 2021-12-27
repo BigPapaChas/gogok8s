@@ -5,10 +5,9 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/BigPapaChas/gogok8s/internal/clusters"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
-
-	"github.com/BigPapaChas/gogok8s/internal/clusters"
 )
 
 type Config struct {
@@ -38,6 +37,8 @@ var (
 	validRegionsMap = getValidRegions()
 )
 
+const configFilemode = os.FileMode(0o644)
+
 func NewConfig() *Config {
 	return &Config{}
 }
@@ -64,6 +65,7 @@ func (c *Config) Validate() error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -77,7 +79,7 @@ func (c *Config) WriteToFile(filename string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filename, data, os.FileMode(0o644))
+	return ioutil.WriteFile(filename, data, configFilemode)
 }
 
 func (c *Config) AddAccount(account clusters.EKSAccount) {
@@ -86,6 +88,7 @@ func (c *Config) AddAccount(account clusters.EKSAccount) {
 
 func isValidRegion(region string) bool {
 	_, ok := validRegionsMap[region]
+
 	return ok
 }
 
@@ -94,5 +97,6 @@ func getValidRegions() map[string]struct{} {
 	for _, region := range ValidRegions {
 		regions[region] = struct{}{}
 	}
+
 	return regions
 }

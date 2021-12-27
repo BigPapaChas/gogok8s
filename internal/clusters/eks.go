@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/BigPapaChas/gogok8s/internal/kubecfg"
-
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/eks"
 	v1 "k8s.io/client-go/tools/clientcmd/api/v1"
@@ -39,6 +38,8 @@ type DescribeClusterResult struct {
 	Error   error
 }
 
+const defaultTimeout = time.Millisecond * 30000
+
 func (a *EKSAccount) GenerateKubeConfigPatch() (*kubecfg.KubeConfigPatch, []error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithSharedConfigProfile(a.Profile))
 	if err != nil {
@@ -46,16 +47,20 @@ func (a *EKSAccount) GenerateKubeConfigPatch() (*kubecfg.KubeConfigPatch, []erro
 	}
 
 	var allClusters []*EKSCluster
+
 	var allErrors []error
+
 	c := make(chan DescribeRegionResult, len(a.Regions))
+
 	client := eks.NewFromConfig(cfg)
 	for _, region := range a.Regions {
 		go func(eksClient *eks.Client, eksRegion string) {
 			clusterNames, err := listClusters(eksClient, eksRegion)
 			if err != nil {
 				c <- DescribeRegionResult{
-					Errors: []error{fmt.Errorf("account='%s' region='%s': %v", a.Name, eksRegion, err)},
+					Errors: []error{fmt.Errorf("account='%s' region='%s': %w", a.Name, eksRegion, err)},
 				}
+
 				return
 			}
 
@@ -73,8 +78,7 @@ func (a *EKSAccount) GenerateKubeConfigPatch() (*kubecfg.KubeConfigPatch, []erro
 		allErrors = append(allErrors, result.Errors...)
 	}
 
-	patch := a.generateKubeConfigPatch(allClusters)
-	return patch, allErrors
+	return a.generateKubeConfigPatch(allClusters), allErrors
 }
 
 func (a *EKSAccount) generateKubeConfigPatch(clusters []*EKSCluster) *kubecfg.KubeConfigPatch {
@@ -82,7 +86,6 @@ func (a *EKSAccount) generateKubeConfigPatch(clusters []*EKSCluster) *kubecfg.Ku
 
 	for _, cluster := range clusters {
 		var clusterName, userName, contextName string
-		// TODO: Create a more formal format parsing
 		if a.Format != "" {
 			clusterName = strings.Replace(a.Format, "${cluster}", cluster.Name, 1)
 			userName = strings.Replace(a.Format, "${cluster}", cluster.Name, 1)
@@ -116,6 +119,7 @@ func (a *EKSAccount) generateKubeConfigPatch(clusters []*EKSCluster) *kubecfg.Ku
 			},
 		})
 	}
+
 	return patch
 }
 
@@ -135,17 +139,22 @@ func (a *EKSAccount) generateIAMAuthenticatorExecConfig(cluster *EKSCluster) *v1
 
 func getClusters(client *eks.Client, clusterNames []string, region string) ([]*EKSCluster, []error) {
 	var clusters []*EKSCluster
+
 	var errors []error
 
 	c := make(chan DescribeClusterResult, len(clusterNames))
+
 	for _, clusterName := range clusterNames {
 		go func(client *eks.Client, clusterName, region string) {
 			description, err := describeCluster(client, clusterName, region)
 			if err != nil {
 				c <- DescribeClusterResult{Error: err}
+
 				return
 			}
+
 			decodedCertData, _ := base64.StdEncoding.DecodeString(*description.Cluster.CertificateAuthority.Data)
+
 			c <- DescribeClusterResult{
 				Cluster: &EKSCluster{
 					Name:                     clusterName,
@@ -164,8 +173,10 @@ func getClusters(client *eks.Client, clusterNames []string, region string) ([]*E
 		if result.Error != nil {
 			// DescribeCluster encountered an error, add to list of errors and continue to next result
 			errors = append(errors, result.Error)
+
 			continue
 		}
+
 		clusters = append(clusters, result.Cluster)
 	}
 
@@ -174,14 +185,15 @@ func getClusters(client *eks.Client, clusterNames []string, region string) ([]*E
 
 func describeCluster(client *eks.Client, clusterName, region string) (*eks.DescribeClusterOutput, error) {
 	params := &eks.DescribeClusterInput{Name: &clusterName}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 
 	output, err := client.DescribeCluster(ctx, params, func(o *eks.Options) {
 		o.Region = region
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cluster=%s, region=%s: %v", clusterName, region, err)
+		return nil, fmt.Errorf("cluster=%s, region=%s: %w", clusterName, region, err)
 	}
 
 	return output, nil
@@ -189,14 +201,16 @@ func describeCluster(client *eks.Client, clusterName, region string) (*eks.Descr
 
 func listClusters(client *eks.Client, region string) ([]string, error) {
 	params := &eks.ListClustersInput{}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+
+	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
+
 	output, err := client.ListClusters(ctx, params, func(o *eks.Options) {
 		o.Region = region
 	})
-
 	if err != nil {
 		return nil, err
 	}
+
 	return output.Clusters, nil
 }

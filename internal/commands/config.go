@@ -5,11 +5,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/spf13/cobra"
-
 	"github.com/BigPapaChas/gogok8s/internal/clusters"
 	"github.com/BigPapaChas/gogok8s/internal/config"
 	"github.com/BigPapaChas/gogok8s/internal/terminal"
+	"github.com/spf13/cobra"
 )
 
 var configCmd = &cobra.Command{
@@ -24,6 +23,7 @@ var configCmd = &cobra.Command{
 		if cfg != nil {
 			return cfg.Validate()
 		}
+
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -85,6 +85,7 @@ var configCmd = &cobra.Command{
 			}
 		}
 		terminal.TextSuccess(fmt.Sprintf("account %s added", accountName))
+
 		return nil
 	},
 }

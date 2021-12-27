@@ -10,6 +10,7 @@ func PrintBulletedWarnings(errors []error) {
 			Text:  pterm.Yellow(err),
 		})
 	}
+
 	_ = pterm.DefaultBulletList.WithItems(prettyErrors).Render()
 }
 
