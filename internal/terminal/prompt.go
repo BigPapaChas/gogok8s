@@ -11,18 +11,22 @@ import (
 
 var ErrUserQuit = errors.New("error user quit prompt")
 
-func Prompt(label, defaultValue string) (string, error) {
+func PromptDefault(label, defaultValue string) (string, error) {
+	return PromptWithValidate(label, defaultValue, func(s string) error {
+		if len(s) == 0 {
+			return fmt.Errorf("%s must contain at least one character", label)
+		}
+
+		return nil
+	})
+}
+
+func PromptWithValidate(label, defaultValue string, fn func(s string) error) (string, error) {
 	prompt := promptui.Prompt{
 		Label:     label,
 		Default:   defaultValue,
 		AllowEdit: true,
-		Validate: func(s string) error {
-			if len(s) == 0 {
-				return fmt.Errorf("%s must contain at least one character", label)
-			}
-
-			return nil
-		},
+		Validate:  fn,
 	}
 
 	result, err := prompt.Run()

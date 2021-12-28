@@ -14,7 +14,7 @@ import (
 
 var configCmd = &cobra.Command{
 	Use:           "configure",
-	Short:         "configure the .gogok8s.yaml file",
+	Short:         "create a new account entry within the .gogok8s.yaml file",
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -43,7 +43,7 @@ var configCmd = &cobra.Command{
 			} else {
 				defaultFilename = cfgFile
 			}
-			filename, err = terminal.Prompt("Gogok8s config file", defaultFilename)
+			filename, err = terminal.PromptDefault("Gogok8s config file", defaultFilename)
 			if err != nil {
 				return err
 			}
@@ -51,12 +51,12 @@ var configCmd = &cobra.Command{
 			cfg = config.NewConfig()
 		}
 
-		accountName, err := terminal.Prompt("Account name", "")
+		accountName, err := terminal.PromptWithValidate("Account name", "", cfg.IsValidAccountName)
 		if err != nil {
 			return err
 		}
 
-		profile, err := terminal.Prompt("AWS Profile", "")
+		profile, err := terminal.PromptDefault("AWS Profile", "")
 		if err != nil {
 			return err
 		}
