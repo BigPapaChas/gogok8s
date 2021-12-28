@@ -62,10 +62,19 @@ within the `us-east-1` region named `test-v1.20`, the kubeconfig context would b
 
 # Syncing Clusters
 
-Running `gogok8s sync` will look for EKS clusters in each account (and region) and fetch the necessary details to craft 
-a kubeconfig cluster/user/context for connecting to the cluster. This command offers the following flags:
+Running `gogok8s sync [accounts]` will look for EKS clusters in each account (and region) and fetch the necessary 
+details to craft a kubeconfig cluster/user/context for connecting to the cluster. When no accounts are passed, all
+accounts in the config file will be searched. This command supports the following flags:
+
 - `--dry-run` - Performs a dryrun, only showing the kubeconfig diffs.
 - `--purge` - Purges the kubeconfig of EKS clusters that were not found. This is off by default.
+
+The `sync` command optionally accepts the accounts you want synced. Using the example config, if you want to only sync 
+the `Dev` & `Staging` accounts you can run:
+```bash
+gogok8s sync Dev Staging
+```
+
 
 # Editing the Format
 
