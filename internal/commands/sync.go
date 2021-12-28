@@ -14,7 +14,7 @@ import (
 var errConfigNotExist = errors.New("couldn't find .gogok8s.yaml in home directory, try running `gogok8s configure`")
 
 var syncCommand = &cobra.Command{
-	Use:   "sync",
+	Use:   "sync [accounts]",
 	Short: "syncs your kubeconfig with all available k8s clusters",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		if debug {
@@ -30,19 +30,40 @@ var syncCommand = &cobra.Command{
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		purge, _ := cmd.Flags().GetBool("purge")
 
-		return syncKubernetesClusters(dryRun, purge)
+		return syncKubernetesClusters(dryRun, purge, args)
+	},
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if cfg != nil {
+			return cfg.ListAccountNamesFiltered(args), cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return nil, cobra.ShellCompDirectiveNoFileComp
 	},
 	SilenceErrors: true,
 	SilenceUsage:  true,
 }
 
-func syncKubernetesClusters(dryRun, purge bool) error {
+func syncKubernetesClusters(dryRun, purge bool, accounts []string) error {
 	kubeconfig, err := kubecfg.LoadDefault()
 	if err != nil {
 		return fmt.Errorf("error reading from kubeconfig: %w", err)
 	}
 
-	patch := clusters.GetPatchFromAccounts(cfg.Accounts)
+	var eksAccounts []clusters.EKSAccount
+
+	if len(accounts) == 0 {
+		// If no accounts were passed to the command, fetch from all accounts
+		eksAccounts = cfg.Accounts
+	} else {
+		// If accounts were provided, only fetch from those accounts
+		eksAccounts = cfg.ListAccountsFiltered(accounts)
+	}
+
+	if len(eksAccounts) == 0 {
+		return nil
+	}
+
+	patch := clusters.GetPatchFromAccounts(eksAccounts)
 
 	kubecfg.ApplyPatch(patch.Patch, kubeconfig, purge)
 

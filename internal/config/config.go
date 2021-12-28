@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/BigPapaChas/gogok8s/internal/clusters"
+	"github.com/BigPapaChas/gogok8s/internal/terminal"
 )
 
 type Config struct {
@@ -85,6 +86,45 @@ func (c *Config) WriteToFile(filename string) error {
 
 func (c *Config) AddAccount(account clusters.EKSAccount) {
 	c.Accounts = append(c.Accounts, account)
+}
+
+func (c *Config) ListAccountsFiltered(filter []string) []clusters.EKSAccount {
+	filterAccounts := make(map[string]struct{})
+	for _, account := range filter {
+		filterAccounts[account] = struct{}{}
+	}
+
+	var accounts []clusters.EKSAccount
+
+	for _, account := range c.Accounts {
+		if _, ok := filterAccounts[account.Name]; ok {
+			accounts = append(accounts, account)
+			delete(filterAccounts, account.Name)
+		}
+	}
+
+	for account := range filterAccounts {
+		terminal.PrintWarning(fmt.Sprintf("can't find account `%s`", account))
+	}
+
+	return accounts
+}
+
+func (c *Config) ListAccountNamesFiltered(excludeFilter []string) []string {
+	excludeAccounts := make(map[string]struct{})
+	for _, account := range excludeFilter {
+		excludeAccounts[account] = struct{}{}
+	}
+
+	var accountNames []string
+
+	for _, account := range c.Accounts {
+		if _, ok := excludeAccounts[account.Name]; !ok {
+			accountNames = append(accountNames, account.Name)
+		}
+	}
+
+	return accountNames
 }
 
 func (c *Config) IsValidAccountName(name string) error {
