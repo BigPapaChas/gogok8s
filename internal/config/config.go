@@ -87,6 +87,16 @@ func (c *Config) AddAccount(account clusters.EKSAccount) {
 	c.Accounts = append(c.Accounts, account)
 }
 
+func (c *Config) IsValidAccountName(name string) error {
+	for _, account := range c.Accounts {
+		if name == account.Name {
+			return fmt.Errorf("an account with name `%s` already exists", name)
+		}
+	}
+
+	return nil
+}
+
 func isValidRegion(region string) bool {
 	_, ok := validRegionsMap[region]
 
