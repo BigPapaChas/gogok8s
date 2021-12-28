@@ -20,7 +20,7 @@ Create your `.gogok8s.yaml` config file by using the `configure` command.
 
 <p align="center"><img src="/img/gogok8s-configure.gif?raw=true" alt="gogok8s-configure-demo"/></p>
 
-# Example Config
+## Example Config
 
 An example gogok8s config might look something like this:
 
@@ -60,7 +60,7 @@ Each entry in `accounts` has the following fields:
 named `${name}.${region}.${clusterName}`. For example, if the `Dev` account within the config file above had a cluster
 within the `us-east-1` region named `test-v1.20`, the kubeconfig context would be named `Dev.us-east-1.test-v1.20`.
 
-# Syncing Clusters
+## Syncing Clusters
 
 Running `gogok8s sync [accounts]` will look for EKS clusters in each account (and region) and fetch the necessary 
 details to craft a kubeconfig cluster/user/context for connecting to the cluster. When no accounts are passed, all
@@ -75,8 +75,7 @@ the `Dev` & `Staging` accounts you can run:
 gogok8s sync Dev Staging
 ```
 
-
-# Editing the Format
+## Editing the Format
 
 The `format` field supports some customization as to how the kubeconfig clusters, users, and contexts are named. The
 following variables can be included as part of the format:
@@ -84,3 +83,16 @@ following variables can be included as part of the format:
 - `${region}` - The AWS region of the cluster
 - `${clusterName}` - The EKS cluster name
 - `${clusterArn}` - The EKS cluster arn
+
+## Shell Completions
+Gogok8s uses [Cobra](https://github.com/spf13/cobra) and comes bundled with completions for the following shells:
+- `bash`
+- `fish`
+- `powershell`
+- `zsh`
+
+Check out the instructions for adding completions for your preferred shell by running the following command (replacing `$YOUR_SHELL` with one from the list above):
+
+```bash
+gogok8s completion $YOUR_SHELL --help
+```
