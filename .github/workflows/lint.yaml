@@ -9,6 +9,6 @@ jobs:
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2
         with:
-          golangci_lint_flags: '--enable-all --disable wrapcheck,goerr113,gochecknoglobals,exhaustivestruct,gochecknoinits,interfacer,prealloc,gci'
+          golangci_lint_flags: '--enable-all --disable wrapcheck,goerr113,gochecknoglobals,exhaustivestruct,gochecknoinits,interfacer,prealloc,gci,cyclop'
           fail_on_error: true
           go_version: 1.17
