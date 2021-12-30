@@ -97,7 +97,12 @@ func (m selectModel) View() string {
 	}
 
 	// The footer
-	s += "\nPress c to continue, q to quit.\n"
+	if len(m.selected) == 0 {
+		s += pterm.Yellow(fmt.Sprintf("\nYou must select at least one of the %s", m.title))
+		s += "\nPress q to quit.\n"
+	} else {
+		s += "\nPress c to continue, q to quit.\n"
+	}
 
 	// Send the UI for rendering
 	return s
@@ -109,39 +114,43 @@ func (m selectModel) Init() tea.Cmd {
 }
 
 func (m selectModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if msg, ok := msg.(tea.KeyMsg); ok {
-		// Cool, what was the actual key pressed?
-		switch msg.String() {
-		// These keys should exit the program.
-		case "ctrl+c", "q":
-			m.userQuit[0] = struct{}{}
+	message, ok := msg.(tea.KeyMsg)
+	if !ok {
+		return m, nil
+	}
+	// Cool, what was the actual key pressed?
+	switch message.String() {
+	// These keys should exit the program.
+	case "ctrl+c", "q":
+		m.userQuit[0] = struct{}{}
 
+		return m, tea.Quit
+
+	case "c":
+		if len(m.selected) > 0 {
 			return m, tea.Quit
+		}
 
-		case "c":
-			return m, tea.Quit
+	// The "up" and "k" keys move the cursor up
+	case "up", "k":
+		if m.cursor > 0 {
+			m.cursor--
+		}
 
-		// The "up" and "k" keys move the cursor up
-		case "up", "k":
-			if m.cursor > 0 {
-				m.cursor--
-			}
+	// The "down" and "j" keys move the cursor down
+	case "down", "j":
+		if m.cursor < len(m.choices)-1 {
+			m.cursor++
+		}
 
-		// The "down" and "j" keys move the cursor down
-		case "down", "j":
-			if m.cursor < len(m.choices)-1 {
-				m.cursor++
-			}
-
-		// The "enter" key and the spacebar (a literal space) toggle
-		// the selected state for the item that the cursor is pointing at.
-		case "enter", " ":
-			_, ok := m.selected[m.cursor]
-			if ok {
-				delete(m.selected, m.cursor)
-			} else {
-				m.selected[m.cursor] = struct{}{}
-			}
+	// The "enter" key and the spacebar (a literal space) toggle
+	// the selected state for the item that the cursor is pointing at.
+	case "enter", " ":
+		_, ok := m.selected[m.cursor]
+		if ok {
+			delete(m.selected, m.cursor)
+		} else {
+			m.selected[m.cursor] = struct{}{}
 		}
 	}
 
