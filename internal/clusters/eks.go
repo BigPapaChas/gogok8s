@@ -15,10 +15,16 @@ import (
 )
 
 type EKSAccount struct {
-	Profile string   `yaml:"profile"`
-	Regions []string `yaml:"regions"`
-	Name    string   `yaml:"name"`
-	Format  string   `yaml:"format"`
+	Profile    string    `yaml:"profile"`
+	Regions    []string  `yaml:"regions"`
+	Name       string    `yaml:"name"`
+	Format     string    `yaml:"format"`
+	ExtraUsers []EKSUser `yaml:"extraUsers,omitempty"`
+}
+
+type EKSUser struct {
+	Name    string `yaml:"name"`
+	Profile string `yaml:"profile"`
 }
 
 type EKSCluster struct {
@@ -114,9 +120,25 @@ func (a *EKSAccount) generateKubeConfigPatch(clusters []*EKSCluster) *kubecfg.Ku
 		patch.Users = append(patch.Users, &v1.NamedAuthInfo{
 			Name: userName,
 			AuthInfo: v1.AuthInfo{
-				Exec: a.generateIAMAuthenticatorExecConfig(cluster),
+				Exec: generateIAMAuthenticatorExecConfig(cluster, a.Profile),
 			},
 		})
+
+		for _, user := range a.ExtraUsers {
+			patch.Users = append(patch.Users, &v1.NamedAuthInfo{
+				Name: userName + "." + user.Name,
+				AuthInfo: v1.AuthInfo{
+					Exec: generateIAMAuthenticatorExecConfig(cluster, user.Profile),
+				},
+			})
+			patch.Contexts = append(patch.Contexts, &v1.NamedContext{
+				Name: contextName + "." + user.Name,
+				Context: v1.Context{
+					Cluster:  clusterName,
+					AuthInfo: userName + "." + user.Name,
+				},
+			})
+		}
 
 		patch.Contexts = append(patch.Contexts, &v1.NamedContext{
 			Name: contextName,
@@ -130,14 +152,14 @@ func (a *EKSAccount) generateKubeConfigPatch(clusters []*EKSCluster) *kubecfg.Ku
 	return patch
 }
 
-func (a *EKSAccount) generateIAMAuthenticatorExecConfig(cluster *EKSCluster) *v1.ExecConfig {
+func generateIAMAuthenticatorExecConfig(cluster *EKSCluster, profile string) *v1.ExecConfig {
 	return &v1.ExecConfig{
 		Command: "aws-iam-authenticator",
 		Args:    []string{"token", "-i", cluster.Name, "--region", cluster.Region},
 		Env: []v1.ExecEnvVar{
 			{
 				Name:  "AWS_PROFILE",
-				Value: a.Profile,
+				Value: profile,
 			},
 		},
 		APIVersion: "client.authentication.k8s.io/v1beta1",
