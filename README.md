@@ -50,15 +50,20 @@ accounts:
       - us-west-2
       - eu-west-1
     format: "prod.${region}.${clusterName}"
+    extraUsers:
+      - name: admin
+        profile: prod-admin-write
 ```
 
-Each entry in `accounts` has the following fields:
+Each entry in `accounts` can have the following fields:
 - `name` - A convenient name you wish to give for this AWS account
 - `profile` - The AWS profile name used to list & describe EKS clusters
 - `regions` - The list of AWS regions that will be searched for EKS clusters
 - `format` - The format of the kubeconfig contexts, users, and clusters. By default, all kubeconfig resources will be
 named `${name}.${region}.${clusterName}`. For example, if the `Dev` account within the config file above had a cluster
 within the `us-east-1` region named `test-v1.20`, the kubeconfig context would be named `Dev.us-east-1.test-v1.20`.
+- `extraUsers` - Additional profiles to use when creating the kubeconfig contexts. This can be helpful when there are
+multiple kubernetes users/groups setup within the cluster with their own permissions.
 
 ## Syncing Clusters
 
