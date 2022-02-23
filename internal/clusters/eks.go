@@ -140,7 +140,7 @@ func (a *EKSAccount) generateIAMAuthenticatorExecConfig(cluster *EKSCluster) *v1
 				Value: a.Profile,
 			},
 		},
-		APIVersion: "client.authentication.k8s.io/v1alpha1",
+		APIVersion: "client.authentication.k8s.io/v1beta1",
 	}
 }
 
