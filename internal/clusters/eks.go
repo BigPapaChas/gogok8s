@@ -138,7 +138,6 @@ func (a *EKSAccount) generateKubeConfigPatch(clusters []*EKSCluster) *kubecfg.Ku
 					AuthInfo: userName + "." + user.Name,
 				},
 			})
-
 		}
 
 		patch.Contexts = append(patch.Contexts, &v1.NamedContext{
