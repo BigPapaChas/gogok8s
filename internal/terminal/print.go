@@ -1,6 +1,10 @@
 package terminal
 
-import "github.com/pterm/pterm"
+import (
+	"fmt"
+
+	"github.com/pterm/pterm"
+)
 
 func PrintBulletedWarnings(errors []error) {
 	var prettyErrors []pterm.BulletListItem
@@ -47,7 +51,12 @@ func PrintError(message string) {
 }
 
 func StartNewSpinner(message string) (*pterm.SpinnerPrinter, error) {
-	return pterm.DefaultSpinner.WithRemoveWhenDone(true).Start(message)
+	spinner, err := pterm.DefaultSpinner.WithRemoveWhenDone(true).Start(message)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start new spinner: %w", err)
+	}
+
+	return spinner, nil
 }
 
 func DiffAdd(message string) {

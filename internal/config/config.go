@@ -1,8 +1,8 @@
 package config
 
 import (
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/spf13/viper"
@@ -16,30 +16,34 @@ type Config struct {
 	Accounts []clusters.EKSAccount `yaml:"accounts"`
 }
 
-var (
-	ValidRegions = []string{
-		"us-east-1",
-		"us-east-2",
-		"us-west-1",
-		"us-west-2",
-		"ca-central-1",
-		"eu-central-1",
-		"eu-west-1",
-		"eu-west-2",
-		"eu-west-3",
-		"eu-north-1",
-		"sa-east-1",
-		"ap-northeast-1",
-		"ap-northeast-2",
-		"ap-northeast-3",
-		"ap-southeast-1",
-		"ap-southeast-2",
-		"ap-south-1",
-	}
-	validRegionsMap = getValidRegions()
-)
+//nolint:gochecknoglobals
+var ValidRegions = []string{
+	"us-east-1",
+	"us-east-2",
+	"us-west-1",
+	"us-west-2",
+	"ca-central-1",
+	"eu-central-1",
+	"eu-west-1",
+	"eu-west-2",
+	"eu-west-3",
+	"eu-north-1",
+	"sa-east-1",
+	"ap-northeast-1",
+	"ap-northeast-2",
+	"ap-northeast-3",
+	"ap-southeast-1",
+	"ap-southeast-2",
+	"ap-south-1",
+}
 
 const configFilemode = os.FileMode(0o644)
+
+var (
+	ErrDuplicateAccountName = errors.New("duplicate account name")
+	ErrInvalidAWSRegion     = errors.New("invalid AWS region")
+	ErrMustContainAWSRegion = errors.New("account must contain at least one region")
+)
 
 func NewConfig() *Config {
 	return &Config{}
@@ -47,23 +51,24 @@ func NewConfig() *Config {
 
 func (c *Config) Validate() error {
 	accountNames := make(map[string]struct{})
+
 	for idx, account := range c.Accounts {
 		// validate that there are no duplicate account names
 		if _, ok := accountNames[account.Name]; !ok {
 			accountNames[account.Name] = struct{}{}
 		} else {
-			return fmt.Errorf("error validating config: duplicate account `%s` at accounts[%d]", account.Name, idx)
+			return duplicateAccountError(fmt.Sprintf("`%s` at accounts[%d]", account.Name, idx))
 		}
 
 		// validate that each account has at least one valid region
 		if len(account.Regions) == 0 {
-			return fmt.Errorf("error validating config: account `%s` must contain at least one valid region", account.Name)
+			return accountHasNoRegionsError(account.Name)
 		}
 
 		// validate each region is a valid AWS region
 		for _, region := range account.Regions {
 			if !isValidRegion(region) {
-				return fmt.Errorf("error validating config: invalid region `%s` in account `%s`", region, account.Name)
+				return invalidRegionError(fmt.Sprintf("region %s in account %s", region, account.Name))
 			}
 		}
 	}
@@ -78,10 +83,14 @@ func (c *Config) Write() error {
 func (c *Config) WriteToFile(filename string) error {
 	data, err := yaml.Marshal(c)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal config yaml: %w", err)
 	}
 
-	return ioutil.WriteFile(filename, data, configFilemode)
+	if err = os.WriteFile(filename, data, configFilemode); err != nil {
+		return fmt.Errorf("failed to write config yaml to file: %w", err)
+	}
+
+	return nil
 }
 
 func (c *Config) AddAccount(account clusters.EKSAccount) {
@@ -130,24 +139,31 @@ func (c *Config) ListAccountNamesFiltered(excludeFilter []string) []string {
 func (c *Config) IsValidAccountName(name string) error {
 	for _, account := range c.Accounts {
 		if name == account.Name {
-			return fmt.Errorf("an account with name `%s` already exists", name)
+			return duplicateAccountError(name)
 		}
 	}
 
 	return nil
 }
 
-func isValidRegion(region string) bool {
-	_, ok := validRegionsMap[region]
-
-	return ok
+func duplicateAccountError(msg string) error {
+	return fmt.Errorf("%w: %s", ErrDuplicateAccountName, msg)
 }
 
-func getValidRegions() map[string]struct{} {
-	regions := make(map[string]struct{})
-	for _, region := range ValidRegions {
-		regions[region] = struct{}{}
+func invalidRegionError(msg string) error {
+	return fmt.Errorf("%w: %s", ErrInvalidAWSRegion, msg)
+}
+
+func accountHasNoRegionsError(msg string) error {
+	return fmt.Errorf("%w: %s", ErrMustContainAWSRegion, msg)
+}
+
+func isValidRegion(region string) bool {
+	for _, validRegion := range ValidRegions {
+		if region == validRegion {
+			return true
+		}
 	}
 
-	return regions
+	return false
 }

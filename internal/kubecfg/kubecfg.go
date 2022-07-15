@@ -3,6 +3,7 @@ package kubecfg
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"path"
 
@@ -32,9 +33,11 @@ func LoadFromFile(filename string) (*api.Config, error) {
 	cfg, err := clientcmd.LoadFromFile(filename)
 	if err != nil && errors.Is(err, os.ErrNotExist) {
 		return api.NewConfig(), nil
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to load kube config from file: %w", err)
 	}
 
-	return cfg, err
+	return cfg, nil
 }
 
 func Write(config *api.Config) error {
@@ -43,7 +46,11 @@ func Write(config *api.Config) error {
 		return err
 	}
 
-	return writeKubeConfigToFile(config, filename)
+	if err = clientcmd.WriteToFile(*config, filename); err != nil {
+		return fmt.Errorf("failed to write kube config to file: %w", err)
+	}
+
+	return nil
 }
 
 func ApplyPatch(patch *KubeConfigPatch, config *api.Config, purge bool) {
@@ -216,16 +223,12 @@ func convertExecEnvVar(envVars []v1.ExecEnvVar) []api.ExecEnvVar {
 	return convertedExecEnvVars
 }
 
-func writeKubeConfigToFile(config *api.Config, filename string) error {
-	return clientcmd.WriteToFile(*config, filename)
-}
-
 func getKubeConfigFilePath() (string, error) {
 	filename, ok := os.LookupEnv("KUBECONFIG")
 	if !ok {
 		homedir, err := os.UserHomeDir()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to find user home directory: %w", err)
 		}
 
 		filename = path.Join(homedir, ".kube", "config")

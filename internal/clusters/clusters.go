@@ -15,7 +15,7 @@ func GetPatchFromAccounts(accounts []EKSAccount) PatchResult {
 	patch := PatchResult{
 		Patch: &kubecfg.KubeConfigPatch{},
 	}
-	c := make(chan PatchResult, len(accounts))
+	resultChan := make(chan PatchResult, len(accounts))
 
 	spinner, _ := terminal.StartNewSpinner("Fetching EKS clusters from accounts...")
 
@@ -23,7 +23,7 @@ func GetPatchFromAccounts(accounts []EKSAccount) PatchResult {
 		go func(account EKSAccount) {
 			accountPatch, accountErrors := account.GenerateKubeConfigPatch()
 
-			c <- PatchResult{
+			resultChan <- PatchResult{
 				Patch:       accountPatch,
 				Errors:      accountErrors,
 				AccountName: account.Name,
@@ -32,7 +32,7 @@ func GetPatchFromAccounts(accounts []EKSAccount) PatchResult {
 	}
 
 	for range accounts {
-		result := <-c
+		result := <-resultChan
 		patch.Patch.Users = append(patch.Patch.Users, result.Patch.Users...)
 		patch.Patch.Clusters = append(patch.Patch.Clusters, result.Patch.Clusters...)
 		patch.Patch.Contexts = append(patch.Patch.Contexts, result.Patch.Contexts...)
