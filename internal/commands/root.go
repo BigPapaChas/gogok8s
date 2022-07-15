@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -10,18 +11,26 @@ import (
 	"github.com/BigPapaChas/gogok8s/internal/terminal"
 )
 
-var (
-	cfgFile string
-	cfg     *config.Config
-	debug   bool
+const (
+	exitCodeUserQuit = 130
+	exitCodeError    = 1
+	exitCodeNoError  = 0
 )
 
+var (
+	cfgFile string         //nolint:gochecknoglobals
+	cfg     *config.Config //nolint:gochecknoglobals
+	debug   bool           //nolint:gochecknoglobals
+)
+
+//nolint:gochecknoglobals
 var rootCmd = &cobra.Command{
 	Use:     "gogok8s",
 	Short:   "gogok8s helps manage your k8s cluster kubeconfig(s)",
 	Version: "v0.0.9",
 }
 
+//nolint:gochecknoinits
 func init() {
 	cobra.OnInitialize(initConfig)
 
@@ -58,6 +67,19 @@ func initConfig() {
 	}
 }
 
-func Execute() error {
-	return rootCmd.Execute()
+func Execute() int {
+	var code int
+
+	if err := rootCmd.Execute(); err != nil {
+		if errors.Is(errors.Unwrap(err), terminal.ErrUserQuit) {
+			code = exitCodeUserQuit
+		} else {
+			terminal.PrintError(err.Error())
+			code = exitCodeError
+		}
+	} else {
+		code = exitCodeNoError
+	}
+
+	return code
 }

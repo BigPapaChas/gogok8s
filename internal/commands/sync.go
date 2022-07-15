@@ -13,6 +13,7 @@ import (
 
 var errConfigNotExist = errors.New("couldn't find .gogok8s.yaml in home directory, try running `gogok8s configure`")
 
+//nolint:gochecknoglobals
 var syncCommand = &cobra.Command{
 	Use:   "sync [accounts]",
 	Short: "syncs your kubeconfig with all available k8s clusters",
@@ -24,7 +25,11 @@ var syncCommand = &cobra.Command{
 			return errConfigNotExist
 		}
 
-		return cfg.Validate()
+		if err := cfg.Validate(); err != nil {
+			return fmt.Errorf("error validating config: %w", err)
+		}
+
+		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
@@ -75,7 +80,7 @@ func syncKubernetesClusters(dryRun, purge bool, accounts []string) error {
 
 	err = kubecfg.Write(kubeconfig)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to write to kubeconfig: %w", err)
 	}
 
 	terminal.TextSuccess("kubeconfig updated")

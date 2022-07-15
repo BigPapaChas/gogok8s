@@ -9,12 +9,15 @@ import (
 	"github.com/pterm/pterm"
 )
 
-var ErrUserQuit = errors.New("error user quit prompt")
+var (
+	ErrUserQuit            = errors.New("error user quit prompt")
+	ErrNotEnoughCharacters = errors.New("must contain at least one character")
+)
 
 func PromptDefault(label, defaultValue string) (string, error) {
 	return PromptWithValidate(label, defaultValue, func(s string) error {
 		if len(s) == 0 {
-			return fmt.Errorf("%s must contain at least one character", label)
+			return fmt.Errorf("%w: %s", ErrNotEnoughCharacters, label)
 		}
 
 		return nil
@@ -32,9 +35,11 @@ func PromptWithValidate(label, defaultValue string, fn func(s string) error) (st
 	result, err := prompt.Run()
 	if err != nil && errors.Is(err, promptui.ErrInterrupt) {
 		return "", ErrUserQuit
+	} else if err != nil {
+		return "", fmt.Errorf("error running PromptWithValidate: %w", err)
 	}
 
-	return result, err
+	return result, nil
 }
 
 func MultiSelect(name string, choices []string) ([]string, error) {
@@ -47,7 +52,7 @@ func MultiSelect(name string, choices []string) ([]string, error) {
 	p := tea.NewProgram(model)
 
 	if err := p.Start(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to start MultiSelect tea model: %w", err)
 	}
 
 	if len(model.userQuit) > 0 {
@@ -71,41 +76,41 @@ type selectModel struct {
 }
 
 func (m selectModel) View() string {
-	// The header
-	s := m.title + ":\n"
+	// The text
+	text := m.title + ":\n"
 
 	// Iterate over our choices
-	for i, choice := range m.choices {
+	for idx, choice := range m.choices {
 		// Is the cursor pointing at this choice?
 		cursor := " " // no cursor
-		if m.cursor == i {
+		if m.cursor == idx {
 			cursor = ">" // cursor!
 		}
 
 		// Is this choice selected?
 		checked := " " // not selected
-		if _, ok := m.selected[i]; ok {
+		if _, ok := m.selected[idx]; ok {
 			checked = "x" // selected!
 		}
 
 		// Render the row
 		if checked == "x" || cursor == ">" {
-			s += pterm.Green(fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice))
+			text += pterm.Green(fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice))
 		} else {
-			s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+			text += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
 		}
 	}
 
 	// The footer
 	if len(m.selected) == 0 {
-		s += pterm.Yellow(fmt.Sprintf("\nYou must select at least one of the %s", m.title))
-		s += "\nPress q to quit.\n"
+		text += pterm.Yellow(fmt.Sprintf("\nYou must select at least one of the %s", m.title))
+		text += "\nPress q to quit.\n"
 	} else {
-		s += "\nPress c to continue, q to quit.\n"
+		text += "\nPress c to continue, q to quit.\n"
 	}
 
 	// Send the UI for rendering
-	return s
+	return text
 }
 
 func (m selectModel) Init() tea.Cmd {

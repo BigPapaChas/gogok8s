@@ -60,14 +60,14 @@ func (a *EKSAccount) GenerateKubeConfigPatch() (*kubecfg.KubeConfigPatch, []erro
 
 	var allErrors []error
 
-	c := make(chan DescribeRegionResult, len(a.Regions))
-
+	resultChan := make(chan DescribeRegionResult, len(a.Regions))
 	client := eks.NewFromConfig(cfg)
+
 	for _, region := range a.Regions {
 		go func(eksClient *eks.Client, eksRegion string) {
 			clusterNames, err := listClusters(eksClient, eksRegion)
 			if err != nil {
-				c <- DescribeRegionResult{
+				resultChan <- DescribeRegionResult{
 					Errors: []error{fmt.Errorf("account='%s' region='%s': %w", a.Name, eksRegion, err)},
 				}
 
@@ -75,7 +75,7 @@ func (a *EKSAccount) GenerateKubeConfigPatch() (*kubecfg.KubeConfigPatch, []erro
 			}
 
 			clusters, errors := getClusters(eksClient, clusterNames, eksRegion)
-			c <- DescribeRegionResult{
+			resultChan <- DescribeRegionResult{
 				Clusters: clusters,
 				Errors:   errors,
 			}
@@ -83,7 +83,7 @@ func (a *EKSAccount) GenerateKubeConfigPatch() (*kubecfg.KubeConfigPatch, []erro
 	}
 
 	for range a.Regions {
-		result := <-c
+		result := <-resultChan
 		allClusters = append(allClusters, result.Clusters...)
 		allErrors = append(allErrors, result.Errors...)
 	}
@@ -171,20 +171,20 @@ func getClusters(client *eks.Client, clusterNames []string, region string) ([]*E
 
 	var errors []error
 
-	c := make(chan DescribeClusterResult, len(clusterNames))
+	resultChan := make(chan DescribeClusterResult, len(clusterNames))
 
 	for _, clusterName := range clusterNames {
 		go func(client *eks.Client, clusterName, region string) {
 			description, err := describeCluster(client, clusterName, region)
 			if err != nil {
-				c <- DescribeClusterResult{Error: err}
+				resultChan <- DescribeClusterResult{Error: err}
 
 				return
 			}
 
 			decodedCertData, _ := base64.StdEncoding.DecodeString(*description.Cluster.CertificateAuthority.Data)
 
-			c <- DescribeClusterResult{
+			resultChan <- DescribeClusterResult{
 				Cluster: &EKSCluster{
 					Name:                     clusterName,
 					Region:                   region,
@@ -198,7 +198,7 @@ func getClusters(client *eks.Client, clusterNames []string, region string) ([]*E
 	}
 
 	for range clusterNames {
-		result := <-c
+		result := <-resultChan
 		if result.Error != nil {
 			// DescribeCluster encountered an error, add to list of errors and continue to next result
 			errors = append(errors, result.Error)
@@ -238,7 +238,7 @@ func listClusters(client *eks.Client, region string) ([]string, error) {
 		o.Region = region
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list EKS clusters: %w", err)
 	}
 
 	return output.Clusters, nil
