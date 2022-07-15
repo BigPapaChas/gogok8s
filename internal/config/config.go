@@ -40,7 +40,7 @@ var ValidRegions = []string{
 const configFilemode = os.FileMode(0o644)
 
 var (
-	ErrDuplicateAccountName = errors.New("duplicate account name")
+	ErrDuplicateAccountName = errors.New("Account name already exists")
 	ErrInvalidAWSRegion     = errors.New("invalid AWS region")
 	ErrMustContainAWSRegion = errors.New("account must contain at least one region")
 )

@@ -92,7 +92,7 @@ var configCmd = &cobra.Command{
 				return fmt.Errorf("failed to write %s config: %w", viper.ConfigFileUsed(), err)
 			}
 		}
-		terminal.TextSuccess(fmt.Sprintf("account %s added", accountName))
+		terminal.TextSuccess(fmt.Sprintf("Account %s configured", accountName))
 
 		return nil
 	},
