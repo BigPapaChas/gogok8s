@@ -2,51 +2,9 @@ package clusters
 
 import (
 	"github.com/BigPapaChas/gogok8s/internal/kubecfg"
-	"github.com/BigPapaChas/gogok8s/internal/terminal"
 )
 
-type PatchResult struct {
-	Patch       *kubecfg.KubeConfigPatch
-	Errors      []error
-	AccountName string
-}
-
-func GetPatchFromAccounts(accounts []EKSAccount) PatchResult {
-	patch := PatchResult{
-		Patch: &kubecfg.KubeConfigPatch{},
-	}
-	resultChan := make(chan PatchResult, len(accounts))
-
-	spinner, _ := terminal.StartNewSpinner("Fetching EKS clusters from accounts...")
-
-	for _, account := range accounts {
-		go func(account EKSAccount) {
-			accountPatch, accountErrors := account.GenerateKubeConfigPatch()
-
-			resultChan <- PatchResult{
-				Patch:       accountPatch,
-				Errors:      accountErrors,
-				AccountName: account.Name,
-			}
-		}(account)
-	}
-
-	for range accounts {
-		result := <-resultChan
-		patch.Patch.Users = append(patch.Patch.Users, result.Patch.Users...)
-		patch.Patch.Clusters = append(patch.Patch.Clusters, result.Patch.Clusters...)
-		patch.Patch.Contexts = append(patch.Patch.Contexts, result.Patch.Contexts...)
-		patch.Errors = append(patch.Errors, result.Errors...)
-
-		if len(result.Errors) > 0 {
-			terminal.TextWarning(result.AccountName)
-			terminal.PrintBulletedWarnings(result.Errors)
-		} else {
-			terminal.TextSuccess(result.AccountName)
-		}
-	}
-
-	_ = spinner.Stop()
-
-	return patch
+type ClusterAccount interface {
+	GenerateKubeConfig() (*kubecfg.KubeConfigPatch, []error)
+	PrettyName() string
 }
