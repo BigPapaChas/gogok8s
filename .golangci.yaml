@@ -10,6 +10,7 @@ linters:
     - scopelint
     - cyclop
     - prealloc
+    - varnamelen
 linters-settings:
   ireturn:
     allow:

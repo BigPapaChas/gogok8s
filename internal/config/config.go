@@ -49,6 +49,15 @@ func NewConfig() *Config {
 	return &Config{}
 }
 
+func (c *Config) GetAccounts() []clusters.ClusterAccount {
+	var accounts []clusters.ClusterAccount
+	for _, account := range c.Accounts {
+		accounts = append(accounts, account)
+	}
+
+	return accounts
+}
+
 func (c *Config) Validate() error {
 	accountNames := make(map[string]struct{})
 
@@ -97,13 +106,13 @@ func (c *Config) AddAccount(account clusters.EKSAccount) {
 	c.Accounts = append(c.Accounts, account)
 }
 
-func (c *Config) ListAccountsFiltered(filter []string) []clusters.EKSAccount {
+func (c *Config) ListAccountsFiltered(filter []string) []clusters.ClusterAccount {
 	filterAccounts := make(map[string]struct{})
 	for _, account := range filter {
 		filterAccounts[account] = struct{}{}
 	}
 
-	var accounts []clusters.EKSAccount
+	var accounts []clusters.ClusterAccount
 
 	for _, account := range c.Accounts {
 		if _, ok := filterAccounts[account.Name]; ok {

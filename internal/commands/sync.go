@@ -35,7 +35,7 @@ var syncCommand = &cobra.Command{
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
 		purge, _ := cmd.Flags().GetBool("purge")
 
-		return syncKubernetesClusters(dryRun, purge, args)
+		return syncKubernetesClusters(args, dryRun, purge)
 	},
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		if cfg != nil {
@@ -48,19 +48,17 @@ var syncCommand = &cobra.Command{
 	SilenceUsage:  true,
 }
 
-func syncKubernetesClusters(dryRun, purge bool, accounts []string) error {
+func syncKubernetesClusters(accounts []string, dryRun, purge bool) error {
 	kubeconfig, err := kubecfg.LoadDefault()
 	if err != nil {
 		return fmt.Errorf("error reading from kubeconfig: %w", err)
 	}
 
-	var eksAccounts []clusters.EKSAccount
-
+	// If no accounts were passed to the command, fetch from all accounts
+	var eksAccounts []clusters.ClusterAccount
 	if len(accounts) == 0 {
-		// If no accounts were passed to the command, fetch from all accounts
-		eksAccounts = cfg.Accounts
+		eksAccounts = cfg.GetAccounts()
 	} else {
-		// If accounts were provided, only fetch from those accounts
 		eksAccounts = cfg.ListAccountsFiltered(accounts)
 	}
 
@@ -68,9 +66,9 @@ func syncKubernetesClusters(dryRun, purge bool, accounts []string) error {
 		return nil
 	}
 
-	patch := clusters.GetPatchFromAccounts(eksAccounts)
+	patch := fetchKubeConfigFromAccounts(eksAccounts)
 
-	kubecfg.ApplyPatch(patch.Patch, kubeconfig, purge)
+	kubecfg.ApplyPatch(patch, kubeconfig, purge)
 
 	if dryRun {
 		terminal.TextSuccess("Dryrun complete")
@@ -86,4 +84,47 @@ func syncKubernetesClusters(dryRun, purge bool, accounts []string) error {
 	terminal.TextSuccess("kubeconfig updated")
 
 	return nil
+}
+
+type KubeConfigResult struct {
+	Patch       *kubecfg.KubeConfigPatch
+	Errors      []error
+	AccountName string
+}
+
+func fetchKubeConfigFromAccounts(accounts []clusters.ClusterAccount) *kubecfg.KubeConfigPatch {
+	kubeconfig := &kubecfg.KubeConfigPatch{}
+	spinner, _ := terminal.StartNewSpinner("Scanning accounts for Kubernetes clusters...")
+	ch := make(chan KubeConfigResult, len(accounts))
+
+	for _, account := range accounts {
+		go func(account clusters.ClusterAccount) {
+			kubeconfigPatch, errors := account.GenerateKubeConfig()
+
+			ch <- KubeConfigResult{
+				Patch:       kubeconfigPatch,
+				Errors:      errors,
+				AccountName: account.PrettyName(),
+			}
+		}(account)
+	}
+
+	for range accounts {
+		result := <-ch
+
+		kubeconfig.Clusters = append(kubeconfig.Clusters, result.Patch.Clusters...)
+		kubeconfig.Users = append(kubeconfig.Users, result.Patch.Users...)
+		kubeconfig.Contexts = append(kubeconfig.Contexts, result.Patch.Contexts...)
+
+		if len(result.Errors) > 0 {
+			terminal.TextWarning(result.AccountName)
+			terminal.PrintBulletedWarnings(result.Errors)
+		} else {
+			terminal.TextSuccess(result.AccountName)
+		}
+	}
+
+	_ = spinner.Stop()
+
+	return kubeconfig
 }
