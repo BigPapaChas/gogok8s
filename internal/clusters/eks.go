@@ -44,15 +44,34 @@ type scanForClustersResult struct {
 	Errors   []error
 }
 
+type EKSClusterAPI interface {
+	ListClusters(
+		ctx context.Context,
+		params *eks.ListClustersInput,
+		optFns ...func(*eks.Options),
+	) (*eks.ListClustersOutput, error)
+	DescribeCluster(
+		ctx context.Context,
+		params *eks.DescribeClusterInput,
+		optFns ...func(*eks.Options),
+	) (*eks.DescribeClusterOutput, error)
+}
+
 const (
 	defaultTimeout = 30 * time.Second
 	defaultFormat  = "${name}.${region}.${clusterName}"
 )
 
 func (a EKSAccount) GenerateKubeConfig() (*kubecfg.KubeConfigPatch, []error) {
-	accountKubeConfig := &kubecfg.KubeConfigPatch{}
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithSharedConfigProfile(a.Profile))
+	if err != nil {
+		return nil, []error{err}
+	}
 
-	clusters, errors := a.scanForClusters()
+	client := eks.NewFromConfig(cfg)
+	clusters, errors := a.ScanForClusters(client)
+
+	accountKubeConfig := &kubecfg.KubeConfigPatch{}
 
 	for _, cluster := range clusters {
 		patch := a.generateKubeConfigFromCluster(cluster)
@@ -127,13 +146,7 @@ func (a *EKSAccount) generateKubeConfigFromCluster(cluster EKSClusterConfig) *ku
 	return patch
 }
 
-func (a *EKSAccount) scanForClusters() ([]EKSClusterConfig, []error) {
-	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithSharedConfigProfile(a.Profile))
-	if err != nil {
-		return nil, []error{err}
-	}
-
-	client := eks.NewFromConfig(cfg)
+func (a *EKSAccount) ScanForClusters(client EKSClusterAPI) ([]EKSClusterConfig, []error) {
 	ch := make(chan scanForClustersResult, len(a.Regions))
 
 	for _, region := range a.Regions {
@@ -153,7 +166,7 @@ func (a *EKSAccount) scanForClusters() ([]EKSClusterConfig, []error) {
 	return clusters, errors
 }
 
-func scanForClustersInRegion(region string, client *eks.Client, ch chan scanForClustersResult) {
+func scanForClustersInRegion(region string, client EKSClusterAPI, ch chan scanForClustersResult) {
 	clusterNames, err := listEKSClusters(client, region)
 	if err != nil {
 		ch <- scanForClustersResult{
@@ -170,7 +183,7 @@ func scanForClustersInRegion(region string, client *eks.Client, ch chan scanForC
 	}
 }
 
-func getEKSClusterConfigs(client *eks.Client, clusterNames []string, region string) ([]EKSClusterConfig, []error) {
+func getEKSClusterConfigs(client EKSClusterAPI, clusterNames []string, region string) ([]EKSClusterConfig, []error) {
 	var clusters []EKSClusterConfig
 
 	var errors []error
@@ -196,7 +209,7 @@ func getEKSClusterConfigs(client *eks.Client, clusterNames []string, region stri
 	return clusters, errors
 }
 
-func getEKSClusterConfig(client *eks.Client, clusterName, region string, ch chan describeEKSResult) {
+func getEKSClusterConfig(client EKSClusterAPI, clusterName, region string, ch chan describeEKSResult) {
 	description, err := describeEKSCluster(client, clusterName, region)
 	if err != nil {
 		ch <- describeEKSResult{Error: err}
@@ -218,7 +231,7 @@ func getEKSClusterConfig(client *eks.Client, clusterName, region string, ch chan
 	}
 }
 
-func describeEKSCluster(client *eks.Client, clusterName, region string) (*eks.DescribeClusterOutput, error) {
+func describeEKSCluster(client EKSClusterAPI, clusterName, region string) (*eks.DescribeClusterOutput, error) {
 	params := &eks.DescribeClusterInput{Name: &clusterName}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
@@ -234,7 +247,7 @@ func describeEKSCluster(client *eks.Client, clusterName, region string) (*eks.De
 	return output, nil
 }
 
-func listEKSClusters(client *eks.Client, region string) ([]string, error) {
+func listEKSClusters(client EKSClusterAPI, region string) ([]string, error) {
 	params := &eks.ListClustersInput{}
 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
