@@ -51,7 +51,8 @@ func MultiSelect(name string, choices []string) ([]string, error) {
 	}
 	p := tea.NewProgram(model)
 
-	if err := p.Start(); err != nil {
+	_, err := p.Run()
+	if err != nil {
 		return nil, fmt.Errorf("failed to start MultiSelect tea model: %w", err)
 	}
 
