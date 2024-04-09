@@ -63,15 +63,15 @@ const (
 )
 
 func (a EKSAccount) GenerateKubeConfig() (*kubecfg.KubeConfigPatch, []error) {
+	accountKubeConfig := &kubecfg.KubeConfigPatch{}
+
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithSharedConfigProfile(a.Profile))
 	if err != nil {
-		return nil, []error{err}
+		return accountKubeConfig, []error{err}
 	}
 
 	client := eks.NewFromConfig(cfg)
 	clusters, errors := a.ScanForClusters(client)
-
-	accountKubeConfig := &kubecfg.KubeConfigPatch{}
 
 	for _, cluster := range clusters {
 		patch := a.generateKubeConfigFromCluster(cluster)
@@ -87,7 +87,7 @@ func (a EKSAccount) PrettyName() string {
 	return a.Name
 }
 
-func (a *EKSAccount) generateKubeConfigFromCluster(cluster EKSClusterConfig) *kubecfg.KubeConfigPatch {
+func (a EKSAccount) generateKubeConfigFromCluster(cluster EKSClusterConfig) *kubecfg.KubeConfigPatch {
 	patch := &kubecfg.KubeConfigPatch{}
 
 	var clusterName, userName, contextName string
@@ -146,7 +146,7 @@ func (a *EKSAccount) generateKubeConfigFromCluster(cluster EKSClusterConfig) *ku
 	return patch
 }
 
-func (a *EKSAccount) ScanForClusters(client EKSClusterAPI) ([]EKSClusterConfig, []error) {
+func (a EKSAccount) ScanForClusters(client EKSClusterAPI) ([]EKSClusterConfig, []error) {
 	ch := make(chan scanForClustersResult, len(a.Regions))
 
 	for _, region := range a.Regions {
