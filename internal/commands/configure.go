@@ -36,7 +36,6 @@ var configCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var filename string
-		var err error
 		if cfg == nil {
 			// An existing gogok8s config file was not found, prompt user for filename to use
 			home, err := os.UserHomeDir()
