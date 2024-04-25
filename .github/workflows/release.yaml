@@ -24,7 +24,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
-          goversion: 1.21.3
+          goversion: 1.22.2
           project_path: "./cmd/gogok8s"
           binary_name: "gogok8s"
           extra_files: LICENSE README.md
