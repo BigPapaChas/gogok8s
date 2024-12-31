@@ -27,27 +27,27 @@ func PrintDebug(message string) {
 }
 
 func TextYellow(message string) {
-	pterm.DefaultBasicText.Printfln(pterm.Yellow(message))
+	pterm.DefaultBasicText.Printfln("%s", pterm.Yellow(message))
 }
 
 func TextWarning(message string) {
-	pterm.DefaultBasicText.Printfln(pterm.Yellow(message, " ⚠"))
+	pterm.DefaultBasicText.Printfln("%s", pterm.Yellow(message, " ⚠"))
 }
 
 func TextSuccess(message string) {
-	pterm.DefaultBasicText.Printfln(pterm.Green(message, " ✓"))
+	pterm.DefaultBasicText.Printfln("%s", pterm.Green(message, " ✓"))
 }
 
 func PrintSuccess(message string) {
-	pterm.Success.Printfln(message)
+	pterm.Success.Printfln("%s", message)
 }
 
 func PrintWarning(message string) {
-	pterm.Warning.Printfln(message)
+	pterm.Warning.Printfln("%s", message)
 }
 
 func PrintError(message string) {
-	pterm.Error.Printfln(message)
+	pterm.Error.Printfln("%s", message)
 }
 
 func StartNewSpinner(message string) (*pterm.SpinnerPrinter, error) {
@@ -60,13 +60,13 @@ func StartNewSpinner(message string) (*pterm.SpinnerPrinter, error) {
 }
 
 func DiffAdd(message string) {
-	pterm.DefaultBasicText.Printfln(pterm.LightGreen("+ ", message))
+	pterm.DefaultBasicText.Printfln("%s", pterm.LightGreen("+ ", message))
 }
 
 func DiffMinus(message string) {
-	pterm.DefaultBasicText.Printfln(pterm.LightRed("- ", message))
+	pterm.DefaultBasicText.Printfln("%s", pterm.LightRed("- ", message))
 }
 
 func DiffModify(message string) {
-	pterm.DefaultBasicText.Printfln(pterm.LightYellow("~ ", message))
+	pterm.DefaultBasicText.Printfln("%s", pterm.LightYellow("~ ", message))
 }
